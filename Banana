@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banana Synthesizer</title>
+    <style>
+        body {
+            background-color: #2b261f;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            font-size: 2rem;
+            color: #ffe066;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        p {
+            margin-top: 0;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            position: relative;
+            width: 380px;
+            height: 520px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.6));
+        }
+
+        /* Pad styling and animations */
+        .pad {
+            fill: #b38b4d;
+            stroke: #3a2b16;
+            stroke-width: 1.5;
+            cursor: pointer;
+            transition: fill 0.05s, transform 0.05s;
+        }
+
+        .pad:hover {
+            fill: #cfa35e;
+        }
+
+        .pad.active {
+            fill: #ffea79 !important;
+            stroke: #ffffff;
+            stroke-width: 2.5;
+            filter: drop-shadow(0 0 8px #ffea79);
+        }
+
+        .pad-text {
+            fill: #2a1a08;
+            font-size: 11px;
+            font-weight: bold;
+            pointer-events: none;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>BANANA SYNTH</h1>
+    <p>Click or tap the copper pads to play tones</p>
+
+    <div class="container">
+        <svg viewBox="0 0 350 500">
+            <!-- Banana Body -->
+            <path d="M 90 40 
+                     C 220 80, 310 220, 270 410 
+                     C 250 460, 210 470, 190 430 
+                     C 150 330, 90 200, 60 120 
+                     C 45 80, 60 50, 90 40 Z" 
+                  fill="#e5a93b" stroke="#7a5213" stroke-width="4"/>
+
+            <!-- Brown Tips/Endings -->
+            <path d="M 90 40 C 80 30, 70 35, 65 50 C 75 60, 85 55, 90 40 Z" fill="#4a321a" />
+            <path d="M 270 410 C 265 440, 230 460, 190 430 C 210 420, 250 410, 270 410 Z" fill="#4a321a" />
+
+            <!-- Banana Spine Highlights -->
+            <path d="M 85 55 C 180 120, 260 230, 235 415" fill="none" stroke="#fce688" stroke-width="3" opacity="0.5"/>
+            <path d="M 70 100 C 100 180, 150 300, 195 420" fill="none" stroke="#b07e2a" stroke-width="3" opacity="0.6"/>
+
+            <!-- Decorative Logo Text -->
+            <text x="110" y="140" fill="#7a5213" font-weight="bold" font-size="14" transform="rotate(35, 110, 140)" opacity="0.6">BANANA</text>
+
+            <!-- Touch Pads (Mapped C4 to E5) -->
+            <!-- Pad 1: C4 -->
+            <g class="pad-group" data-note="261.63">
+                <path class="pad" d="M 80 150 L 120 165 L 110 185 L 72 170 Z" />
+                <text x="88" y="171" class="pad-text">C4</text>
+            </g>
+
+            <!-- Pad 2: D4 -->
+            <g class="pad-group" data-note="293.66">
+                <path class="pad" d="M 88 180 L 130 195 L 120 215 L 80 200 Z" />
+                <text x="96" y="201" class="pad-text">D4</text>
+            </g>
+
+            <!-- Pad 3: E4 -->
+            <g class="pad-group" data-note="329.63">
+                <path class="pad" d="M 98 210 L 142 225 L 132 245 L 90 230 Z" />
+                <text x="106" y="231" class="pad-text">E4</text>
+            </g>
+
+            <!-- Pad 4: F4 -->
+            <g class="pad-group" data-note="349.23">
+                <path class="pad" d="M 110 240 L 155 255 L 145 275 L 102 260 Z" />
+                <text x="118" y="261" class="pad-text">F4</text>
+            </g>
+
+            <!-- Pad 5: G4 -->
+            <g class="pad-group" data-note="392.00">
+                <path class="pad" d="M 125 270 L 170 285 L 160 305 L 117 290 Z" />
+                <text x="133" y="291" class="pad-text">G4</text>
+            </g>
+
+            <!-- Pad 6: A4 -->
+            <g class="pad-group" data-note="440.00">
+                <path class="pad" d="M 142 300 L 187 312 L 177 332 L 134 320 Z" />
+                <text x="150" y="321" class="pad-text">A4</text>
+            </g>
+
+            <!-- Pad 7: B4 -->
+            <g class="pad-group" data-note="493.88">
+                <path class="pad" d="M 160 330 L 205 338 L 195 358 L 152 350 Z" />
+                <text x="168" y="349" class="pad-text">B4</text>
+            </g>
+
+            <!-- Pad 8: C5 -->
+            <g class="pad-group" data-note="523.25">
+                <path class="pad" d="M 180 360 L 222 362 L 212 382 L 172 380 Z" />
+                <text x="187" y="376" class="pad-text">C5</text>
+            </g>
+
+            <!-- Pad 9: D5 -->
+            <g class="pad-group" data-note="587.33">
+                <path class="pad" d="M 200 388 L 240 382 L 232 402 L 194 408 Z" />
+                <text x="207" y="401" class="pad-text">D5</text>
+            </g>
+
+            <!-- Pad 10: E5 -->
+            <g class="pad-group" data-note="659.25">
+                <path class="pad" d="M 220 412 L 255 400 L 248 420 L 215 430 Z" />
+                <text x="225" y="421" class="pad-text">E5</text>
+            </g>
+        </svg>
+    </div>
+
+    <script>
+        // Web Audio Context setup
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Formant/Vocal "Ba-na-na" tone synthesizer
+        function playBananaTone(freq) {
+            initAudio();
+
+            const now = audioCtx.currentTime;
+
+            // Main tone oscillator (sawtooth provides vocal-like harmonics)
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now);
+
+            // Sub-oscillator for warmth
+            const subOsc = audioCtx.createOscillator();
+            subOsc.type = 'sine';
+            subOsc.frequency.setValueAtTime(freq / 2, now);
+
+            // Vocal Formant Filter (simulates "Ah / Na" vowel sound)
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(800, now);
+            // Envelope on filter frequency to give "B-a-a" vocal opening attack
+            filter.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+            filter.frequency.exponentialRampToValueAtTime(700, now + 0.3);
+            filter.Q.setValueAtTime(3.0, now);
+
+            // Main Gain Envelope
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.4, now + 0.03); // Attack
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.45); // Decay/Release
+
+            // Connect routing: Oscillators -> Filter -> Gain -> Destination
+            osc.connect(filter);
+            subOsc.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            // Start & Stop
+            osc.start(now);
+            subOsc.start(now);
+            osc.stop(now + 0.5);
+            subOsc.stop(now + 0.5);
+        }
+
+        // Attach Interactivity
+        const padGroups = document.querySelectorAll('.pad-group');
+
+        padGroups.forEach(group => {
+            const padElement = group.querySelector('.pad');
+            const freq = parseFloat(group.getAttribute('data-note'));
+
+            const triggerNote = (e) => {
+                e.preventDefault();
+                
+                // Play Sound
+                playBananaTone(freq);
+
+                // Visual Feedback
+                padElement.classList.add('active');
+                setTimeout(() => {
+                    padElement.classList.remove('active');
+                }, 150);
+            };
+
+            group.addEventListener('mousedown', triggerNote);
+            group.addEventListener('touchstart', triggerNote, { passive: false });
+        });
+    </script>
+</body>
+</html>
