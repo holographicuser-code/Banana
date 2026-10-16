@@ -1,0 +1,154 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>
+#include <SDL2/SDL.h>
+
+// --- N64 BUTTON BITMASKS ---
+#define A_BUTTON (1 << 15) // Jump (PS5 Cross)
+#define B_BUTTON (1 << 14) // Punch (PS5 Square)
+#define Z_TRIG   (1 << 13) // Crouch (PS5 L2)
+
+// --- ENGINE STRUCTURES ---
+struct ControllerPad {
+    signed char stick_x;
+    signed char stick_y;
+    unsigned short button;
+};
+
+struct MarioState {
+    float pos[3];       // X, Y, Z position
+    float forwardVel;   // Movement speed
+    float yVel;         // Vertical jump speed
+    bool isGrounded;    // On floor
+};
+
+// Global State
+struct ControllerPad gPad;
+struct MarioState gMario = { {0.0f, 0.0f, 0.0f}, 0.0f, 0.0f, true };
+SDL_GameController *gPS5Controller = NULL;
+
+// --- 1. CONTROLLER INPUT SYSTEM ---
+void init_ps5_controller(void) {
+    if (SDL_Init(SDL_INIT_GAMECONTROLLER) < 0) {
+        printf("SDL Init Error: %s\n", SDL_GetError());
+        return;
+    }
+
+    // Connect to the PS5 DualSense controller
+    for (int i = 0; i < SDL_NumJoysticks(); i++) {
+        if (SDL_IsGameController(i)) {
+            gPS5Controller = SDL_GameControllerOpen(i);
+            if (gPS5Controller) {
+                printf("Successfully connected: %s\n", SDL_GameControllerName(gPS5Controller));
+                break;
+            }
+        }
+    }
+
+    if (!gPS5Controller) {
+        printf("No PS5 controller detected. Please plug in your DualSense gamepad.\n");
+    }
+}
+
+void read_ps5_input(void) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) exit(0);
+    }
+
+    if (!gPS5Controller) return;
+
+    // Read Left Analog Stick (-32768 to 32767) -> Map to N64 range (-80 to 80)
+    int rawX = SDL_GameControllerGetAxis(gPS5Controller, SDL_CONTROLLER_AXIS_LEFTX);
+    int rawY = SDL_GameControllerGetAxis(gPS5Controller, SDL_CONTROLLER_AXIS_LEFTY);
+
+    gPad.stick_x = (signed char)(rawX / 400);
+    gPad.stick_y = (signed char)(-rawY / 400); // Invert Y for N64 coordinates
+
+    // Read Buttons
+    gPad.button = 0;
+
+    // Cross (X) -> Jump (A Button)
+    if (SDL_GameControllerGetButton(gPS5Controller, SDL_CONTROLLER_BUTTON_A)) {
+        gPad.button |= A_BUTTON;
+    }
+    // Square -> Punch (B Button)
+    if (SDL_GameControllerGetButton(gPS5Controller, SDL_CONTROLLER_BUTTON_X)) {
+        gPad.button |= B_BUTTON;
+    }
+    // L2 Trigger -> Crouch (Z Trigger)
+    if (SDL_GameControllerGetAxis(gPS5Controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT) > 8000) {
+        gPad.button |= Z_TRIG;
+    }
+}
+
+// --- 2. MARIO PHYSICS ENGINE ---
+void update_mario_physics(struct MarioState *m, struct ControllerPad *pad) {
+    // Calculate analog stick distance from center
+    float stickMag = sqrtf(pad->stick_x * pad->stick_x + pad->stick_y * pad->stick_y);
+
+    // Apply movement acceleration
+    if (stickMag > 8.0f) {
+        float targetSpeed = stickMag > 32.0f ? 32.0f : stickMag;
+        if (m->forwardVel < targetSpeed) {
+            m->forwardVel += 1.5f; // Acceleration rate
+        }
+    } else {
+        // Friction / Deceleration
+        if (m->forwardVel > 0.0f) {
+            m->forwardVel -= 1.0f;
+            if (m->forwardVel < 0.0f) m->forwardVel = 0.0f;
+        }
+    }
+
+    // Handle Jump (A Button / Cross)
+    if ((pad->button & A_BUTTON) && m->isGrounded) {
+        m->yVel = 42.0f; // Initial N64 Jump Velocity
+        m->isGrounded = false;
+    }
+
+    // Apply Gravity & Update Position
+    if (!m->isGrounded) {
+        m->pos[1] += m->yVel;
+        m->yVel -= 4.0f; // Gravity
+
+        // Landing check
+        if (m->pos[1] <= 0.0f) {
+            m->pos[1] = 0.0f;
+            m->yVel = 0.0f;
+            m->isGrounded = true;
+        }
+    }
+
+    // Move forward along X-axis
+    m->pos[0] += m->forwardVel * 0.1f;
+}
+
+// --- 3. MAIN GAME LOOP ---
+int main(int argc, char *argv[]) {
+    init_ps5_controller();
+
+    printf("\n--- Engine Running! Move the PS5 Left Stick or press Cross (X) ---\n\n");
+
+    // Run game loop for 100 frames (~1.5 seconds)
+    for (int frame = 0; frame < 100; frame++) {
+        read_ps5_input();
+        update_mario_physics(&gMario, &gPad);
+
+        // Display current frame status
+        printf("Frame %02d | Stick X: %3d, Y: %3d | Speed: %4.1f | Y-Pos: %4.1f | Actions: %s%s%s\n",
+               frame,
+               gPad.stick_x, gPad.stick_y,
+               gMario.forwardVel,
+               gMario.pos[1],
+               (gPad.button & A_BUTTON) ? "[JUMP] " : "",
+               (gPad.button & B_BUTTON) ? "[PUNCH] " : "",
+               (gPad.button & Z_TRIG)   ? "[CROUCH] " : "");
+
+        SDL_Delay(33); // Run at roughly 30 FPS
+    }
+
+    if (gPS5Controller) SDL_GameControllerClose(gPS5Controller);
+    SDL_Quit();
+    return 0;
+}
